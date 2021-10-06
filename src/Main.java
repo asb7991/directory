@@ -7,7 +7,7 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) throws SQLException {
-        String fileName = "src/files/file.txt";
+        String fileName = Singleton.getInstance().getProp().getProperty("filepath");
         Path path = Paths.get(fileName);
         Scanner scanner = null;
         try {
@@ -16,21 +16,32 @@ public class Main {
             e.printStackTrace();
         }
 
-        Connection connection = DataBase.getInstance().getConnection();
+        Connection connection = Singleton.getInstance().getConnection();
         Statement statement = connection.createStatement();
-        String query = "TRUNCATE TABLE city";
+
+        String query = "CREATE TABLE IF NOT EXISTS city (id   INT AUTO_INCREMENT PRIMARY KEY,\n" +
+                "                   name VARCHAR(20) NOT NULL,\n" +
+                "                   region VARCHAR(20),\n" +
+                "                   district VARCHAR(20) NOT NULL,\n" +
+                "                   population NUMBER,\n" +
+                "                   foundation NUMBER\n" +
+                ")";
         statement.execute(query);
 
         scanner.useDelimiter(System.getProperty("line.separator"));
         while (scanner.hasNext()) {
             String[] result = scanner.next().split(";");
-            query = "INSERT INTO city (id, name, region, district, population, foundation) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            for (int index = 0; index < result.length; index++) {
-                preparedStatement.setObject(index + 1, result[index]);
+            query = "SELECT id FROM city WHERE id = " + result[0];
+            ResultSet resultSet = statement.executeQuery(query);
+            if (!resultSet.next()) {
+                query = "INSERT INTO city (id, name, region, district, population, foundation) VALUES (?, ?, ?, ?, ?, ?)";
+                PreparedStatement preparedStatement = connection.prepareStatement(query);
+                for (int index = 0; index < result.length; index++) {
+                    preparedStatement.setObject(index + 1, result[index]);
+                }
+                preparedStatement.execute();
+                preparedStatement.close();
             }
-            preparedStatement.execute();
-            preparedStatement.close();
         }
         scanner.close();
         statement.close();
@@ -72,7 +83,6 @@ public class Main {
             }
         } while (answer != 0);
 
-
     }
 
     private static void printAllCities(SortCityType type) throws SQLException {
@@ -88,7 +98,7 @@ public class Main {
                 query = "SELECT * FROM city ORDER BY district ASC, name ASC";
                 break;
         }
-        Statement statement = DataBase.getInstance().getConnection().createStatement();
+        Statement statement = Singleton.getInstance().getConnection().createStatement();
         ResultSet resultSet = statement.executeQuery(query);
 
         while (resultSet.next()) {
@@ -101,7 +111,7 @@ public class Main {
 
     private static void printTheBiggestCity() throws SQLException {
         String query = "SELECT population FROM city";
-        Statement statement = DataBase.getInstance().getConnection().createStatement();
+        Statement statement = Singleton.getInstance().getConnection().createStatement();
         ResultSet resultSet = statement.executeQuery(query);
         List<Integer> array = new ArrayList<>();
         while (resultSet.next()) {
@@ -114,13 +124,13 @@ public class Main {
                 maxIndex = i;
             }
         }
-        System.out.println("[" + maxIndex + "] = " + maxElement);
+        System.out.println("[" + (maxIndex + 1) + "] = " + maxElement);
         statement.close();
     }
 
     private static void printNumberOfCitiesByRegion() throws SQLException {
         String query = "SELECT region, COUNT(region) as count_of_city FROM city GROUP BY region";
-        Statement statement = DataBase.getInstance().getConnection().createStatement();
+        Statement statement = Singleton.getInstance().getConnection().createStatement();
         ResultSet resultSet = statement.executeQuery(query);
         while (resultSet.next()) {
             System.out.println(resultSet.getString("region") + " - " + resultSet.getString("count_of_city"));
