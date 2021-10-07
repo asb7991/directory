@@ -7,7 +7,7 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) throws SQLException {
-        String fileName = Singleton.getInstance().getProp().getProperty("filepath");
+        String fileName = DataBase.getInstance().getProp().getProperty("filepath");
         Path path = Paths.get(fileName);
         Scanner scanner = null;
         try {
@@ -16,7 +16,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        Connection connection = Singleton.getInstance().getConnection();
+        Connection connection = DataBase.getInstance().getConnection();
         Statement statement = connection.createStatement();
 
         String query = "CREATE TABLE IF NOT EXISTS city (id   INT AUTO_INCREMENT PRIMARY KEY,\n" +
@@ -58,22 +58,26 @@ public class Main {
         int answer = 0;
         do {
             System.out.print("directory: ");
-            answer = scanner.nextInt();
+            try {
+                answer = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                answer = 0;
+            }
             switch (answer) {
                 case 1:
-                    Main.printAllCities(SortCityType.NOT_SORT);
+                    Printer.printAllCities(SortCityType.NOT_SORT);
                     break;
                 case 2:
-                    Main.printAllCities(SortCityType.BY_NAME);
+                    Printer.printAllCities(SortCityType.BY_NAME);
                     break;
                 case 3:
-                    Main.printAllCities(SortCityType.BY_DISTINCT_AND_NAME);
+                    Printer.printAllCities(SortCityType.BY_DISTINCT_AND_NAME);
                     break;
                 case 4:
-                    Main.printTheBiggestCity();
+                    Printer.printTheBiggestCity();
                     break;
                 case 5:
-                    Main.printNumberOfCitiesByRegion();
+                    Printer.printNumberOfCitiesByRegion();
                     break;
                 case 0:
                     break;
@@ -83,59 +87,6 @@ public class Main {
             }
         } while (answer != 0);
 
-    }
-
-    private static void printAllCities(SortCityType type) throws SQLException {
-        String query = "";
-        switch (type) {
-            case NOT_SORT:
-                query = "SELECT * FROM city";
-                break;
-            case BY_NAME:
-                query = "SELECT * FROM city ORDER BY name";
-                break;
-            case BY_DISTINCT_AND_NAME:
-                query = "SELECT * FROM city ORDER BY district ASC, name ASC";
-                break;
-        }
-        Statement statement = Singleton.getInstance().getConnection().createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-
-        while (resultSet.next()) {
-            System.out.println("City{name='" + resultSet.getString("name") + "', region='" + resultSet.getString("region") +
-                    "', district='" + resultSet.getString("district") + "', population=" + resultSet.getString("population") +
-                    ", foundation='" + resultSet.getString("foundation") + "'}");
-        }
-        statement.close();
-    }
-
-    private static void printTheBiggestCity() throws SQLException {
-        String query = "SELECT population FROM city";
-        Statement statement = Singleton.getInstance().getConnection().createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-        List<Integer> array = new ArrayList<>();
-        while (resultSet.next()) {
-            array.add(resultSet.getInt("population"));
-        }
-        int maxIndex = 0, maxElement = array.get(0);
-        for (int i = 0; i < array.size(); i++) {
-            if (array.get(i) > maxElement) {
-                maxElement = array.get(i);
-                maxIndex = i;
-            }
-        }
-        System.out.println("[" + (maxIndex + 1) + "] = " + maxElement);
-        statement.close();
-    }
-
-    private static void printNumberOfCitiesByRegion() throws SQLException {
-        String query = "SELECT region, COUNT(region) as count_of_city FROM city GROUP BY region";
-        Statement statement = Singleton.getInstance().getConnection().createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-        while (resultSet.next()) {
-            System.out.println(resultSet.getString("region") + " - " + resultSet.getString("count_of_city"));
-        }
-        statement.close();
     }
 
 }

@@ -3,9 +3,9 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.Properties;
 
-public class Singleton {
+public class DataBase {
 
-    private static Singleton instance;
+    private static DataBase instance;
 
     private final Connection connection;
     private final Properties prop;
@@ -18,7 +18,7 @@ public class Singleton {
         return prop;
     }
 
-    private Singleton() throws SQLException {
+    private DataBase() throws SQLException {
         prop = new Properties();
         try {
             FileInputStream fileInputStream = new FileInputStream("resources/config.properties");
@@ -38,9 +38,9 @@ public class Singleton {
         connection = DriverManager.getConnection(url, user, password);
     }
 
-    public static Singleton getInstance() throws SQLException {
+    public static DataBase getInstance() throws SQLException {
         if (instance == null) {
-            instance = new Singleton();
+            instance = new DataBase();
         }
         return instance;
     }
